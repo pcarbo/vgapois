@@ -8,4 +8,4 @@ output: workflowr::wflow_html
 Follow the links to below to review the results of my analyses.
 
 + [Illustration of the variational approximation applied to a
-   problem with one unknown.][vgapois_demo_1d.html]
+   problem with one unknown.](vgapois_demo_1d.html)
