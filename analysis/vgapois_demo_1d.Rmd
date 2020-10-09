@@ -11,7 +11,10 @@ knitr::opts_chunk$set(comment = "#",collapse = TRUE,results = "hold",
                       fig.align = "center",dpi = 120)
 ```
 
-```{r}
+Load the functions implementing the variational inference algorithms
+and set the seed.
+
+```{r setup}
 source("../code/vgapois.R")
 set.seed(1)
 ```
@@ -19,7 +22,10 @@ set.seed(1)
 Simulate data
 -------------
 
-```{r}
+Simulate counts from the following Poisson model: $y_i \sim
+\mathrm{Poisson}(\lambda_i)$, in which $\log \lambda_i = b_0 + b x_i$.
+
+```{r sim-data}
 n  <- 10
 b0 <- -1
 b  <- 1.5
@@ -28,34 +34,43 @@ r  <- exp(b0 + x*b)
 y  <- rpois(n,r)
 ```
 
-Compute importance sampling estimate of marginal likelihood
------------------------------------------------------------
+Compute Monte Carlo estimate of marginal likelihood
+---------------------------------------------------
 
-```{r}
-s0 <- 3
-ns <- 1e5
-b  <- rnorm(ns,sd = sqrt(s0))
-w  <- rep(0,ns)
+Here we compute an importance sampling estimate of the marginal
+log-likelihood, in which the prior on $b$ is normal with mean zero and
+standard deviation $s_0$. We will compare this against the lower bound
+to the marginal likelihood obtained by the variational approximation.
+
+```{r importance-sampling}
+s0   <- 3
+ns   <- 1e5
+b    <- rnorm(ns,sd = sqrt(s0))
+logw <- rep(0,ns)
 for (i in 1:ns)
-  w[i] <- compute_loglik_pois(x,y,b0,b[i])
-a <- max(w)
-lnZ <- log(mean(exp(w - a))) + a
+  logw[i] <- compute_loglik_pois(x,y,b0,b[i])
+a    <- max(logw)
+logZ <- log(mean(exp(logw - a))) + a
 ```
 
 Fit variational approximation
 -----------------------------
 
-```{r}
+Fit the variational Gaussian approximation by optimizing the
+variational lower bound (the "ELBO").
+
+```{r fit-vga}
 fit <- vgapois1(x,y,b0,s0)
-mu  <- fit$par["mu"]
-s   <- fit$par["s"]
-print(compute_elbo_vgapois1(x,y,b0,s0,mu,s),digits = 6)
+cat(sprintf("Monte Carlo estimate:    %0.12f\n",logZ))
+cat(sprintf("Variational lower bound: %0.12f\n",-fit$value))
 ```
 
 Compare exact and approximate posterior distributions
 -----------------------------------------------------
 
 ```{r, fig.height=3, fig.width=3}
+mu  <- fit$par["mu"]
+s   <- fit$par["s"]
 b    <- seq(-1,3,length.out = 1000)
 n    <- length(b)
 logp <- rep(0,n)
