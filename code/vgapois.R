@@ -6,12 +6,13 @@
 # implementation efficient, or the code concise.
 vgapois1 <- function (x, y, b0, s0, mu = 0, s = 1, numiter = 100) {
   f <- function (par)
-    -compute_elbo_vgapois1(x,y,b0,s0,par[1],par[2])
+    -compute_elbo_vgapois1(x,y,b0,s0,par[1],par[2]^2)
   g <- function (par)
-    -compute_elbo_grad_vgapois1(x,y,b0,s0,par[1],par[2])
-  out <- optim(c(mu,s),f,g,method = "L-BFGS-B",lower = c(-Inf,1e-8),
+    -c(1,2*par[2]) * compute_elbo_grad_vgapois1(x,y,b0,s0,par[1],par[2]^2)
+  out <- optim(c(mu,sqrt(s)),f,g,method = "L-BFGS-B",
                control = list(factr = 1e5,maxit = 100,trace = 6))
   names(out$par) <- c("mu","s")
+  out$par["s"] <- out$par["s"]^2
   return(out)
 }
 
