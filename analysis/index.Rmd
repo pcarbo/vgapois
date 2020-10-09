@@ -1,0 +1,11 @@
+---
+title: Variational Gaussian approximation for Poisson-normal model
+author: Peter Carbonetto
+site: workflowr::wflow_site
+output: workflowr::wflow_html
+---
+
+Follow the links to below to review the results of my analyses.
+
++ [Illustration of the variational approximation applied to a
+   problem with one unknown.][vgapois_demo_1d.html]
