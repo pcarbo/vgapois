@@ -67,6 +67,7 @@ variational lower bound (the "ELBO").
 
 ```{r fit-vga}
 fit <- vgapois1(x,y,b0,s0)
+cat(fit$message,"\n")
 cat(sprintf("Monte Carlo estimate:    %0.12f\n",logZ))
 cat(sprintf("Variational lower bound: %0.12f\n",-fit$value))
 ```

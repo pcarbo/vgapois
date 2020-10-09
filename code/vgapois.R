@@ -28,7 +28,7 @@ vgapois1 <- function (x, y, b0, s0, mu = 0, s = 1, factr = 1e5,
 # Compute the log-likelihood of the counts, y, under the Poisson model.
 # See function vgapois1 for details.
 compute_loglik_pois <- function (x, y, b0, b) {
-  r <- b0 + x*b
+  r <- b0 + x*b # log-rate for Poisson.
   return(sum(dpois(y,exp(r),log = TRUE)))
 }
 
@@ -41,23 +41,20 @@ compute_logp_pois <- function (x, y, b0, b, s0)
 # approximation to the Poisson model. See function vgapois1 for
 # a description of the input arguments.
 compute_elbo_vgapois1 <- function (x, y, b0, s0, mu, s) {
-  r <- b0 + x*mu
-  u <- exp(r + s*x^2/2)
-  f <- (sum(y*r) - sum(u) - sum(lfactorial(y)) +
-        (1 - mu^2/s0 - s/s0 + log(s) - log(s0))/2)
-  g <- sum(dpois(y,u,log = TRUE) - y*s*x^2/2) - kl_norm(0,mu,s0,s)
-  print(f - g)
-  return(f)
+  r <- b0 + x*mu        # log-rate for Poisson.
+  u <- exp(r + s*x^2/2) # "overdispersed" Poisson rate.
+  return(sum(dpois(y,u,log = TRUE) - y*s*x^2/2) - kl_norm(0,mu,s0,s))
 }
 
 # Compute the gradient of the ELBO with respect to the mean (mu) and
 # variance (s) of the normal approximation. See function vgapois1 for
 # details about the input arguments.
 compute_elbo_grad_vgapois1 <- function (x, y, b0, s0, mu, s) {
-  r <- b0 + x*mu
-  u <- exp(r + s*x^2/2)
-  return(c(sum(y*x) - sum(x*u) - mu/s0,
+  r <- b0 + x*mu        # log-rate for Poisson.
+  u <- exp(r + s*x^2/2) # "overdispersed" Poisson rate.
+  return(c(sum(x*(y - u)) - mu/s0,
            (1/s - 1/s0 - sum(x^2*u))/2))
+  return(g1)
 }
 
 # Return the Kullback-Leibler divergence KL(p1 || p2) between two
