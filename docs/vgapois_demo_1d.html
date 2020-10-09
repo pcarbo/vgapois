@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="Peter Carbonetto" />
+
+
+<title>Illustration of variational Gaussian approximation for Poisson-normal model with one unknown</title>
+
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/readable.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<link href="site_libs/highlightjs-9.12.0/textmate.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+
+<link rel="icon" href="https://github.com/workflowr/workflowr-assets/raw/master/img/reproducible.png">
+<!-- Add a small amount of space between sections. -->
+<style type="text/css">
+div.section {
+  padding-top: 12px;
+}
+</style>
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+<style type="text/css">
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.table th:not([align]) {
+  text-align: left;
+}
+</style>
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+</style>
+
+
+<style type="text/css">
+/* padding for bootstrap navbar */
+body {
+  padding-top: 51px;
+  padding-bottom: 40px;
+}
+/* offset scroll position for anchor links (for fixed navbar)  */
+.section h1 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h2 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h3 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h4 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h5 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h6 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #ffffff;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script>
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.parent().addClass('active');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">vgapois</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Overview</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li>
+  <a href="https://github.com/pcarbo/vgapois">source</a>
+</li>
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div class="fluid-row" id="header">
+
+
+
+<h1 class="title toc-ignore">Illustration of variational Gaussian approximation for Poisson-normal model with one unknown</h1>
+<h4 class="author">Peter Carbonetto</h4>
+
+</div>
+
+
+<p>
+<button type="button" class="btn btn-default btn-workflowr btn-workflowr-report" data-toggle="collapse" data-target="#workflowr-report">
+<span class="glyphicon glyphicon-list" aria-hidden="true"></span> workflowr <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span>
+</button>
+</p>
+<div id="workflowr-report" class="collapse">
+<ul class="nav nav-tabs">
+<li class="active">
+<a data-toggle="tab" href="#summary">Summary</a>
+</li>
+<li>
+<a data-toggle="tab" href="#checks"> Checks <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> </a>
+</li>
+<li>
+<a data-toggle="tab" href="#versions">Past versions</a>
+</li>
+</ul>
+<div class="tab-content">
+<div id="summary" class="tab-pane fade in active">
+<p>
+<strong>Last updated:</strong> 2020-10-09
+</p>
+<p>
+<strong>Checks:</strong> <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> 7 <span class="glyphicon glyphicon-exclamation-sign text-danger" aria-hidden="true"></span> 0
+</p>
+<p>
+<strong>Knit directory:</strong> <code>vgapois/analysis/</code> <span class="glyphicon glyphicon-question-sign" aria-hidden="true" title="This is the local directory in which the code in this file was executed."> </span>
+</p>
+<p>
+This reproducible <a href="http://rmarkdown.rstudio.com">R Markdown</a> analysis was created with <a
+  href="https://github.com/jdblischak/workflowr">workflowr</a> (version 1.6.2.9000). The <em>Checks</em> tab describes the reproducibility checks that were applied when the results were created. The <em>Past versions</em> tab lists the development history.
+</p>
+<hr>
+</div>
+<div id="checks" class="tab-pane fade">
+<div id="workflowr-checks" class="panel-group">
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRMarkdownfilestronguptodate"> <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> <strong>R Markdown file:</strong> up-to-date </a>
+</p>
+</div>
+<div id="strongRMarkdownfilestronguptodate" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great! Since the R Markdown file has been committed to the Git repository, you know the exact version of the code that produced these results.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongEnvironmentstrongempty"> <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> <strong>Environment:</strong> empty </a>
+</p>
+</div>
+<div id="strongEnvironmentstrongempty" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! The global environment was empty. Objects defined in the global environment can affect the analysis in your R Markdown file in unknown ways. For reproduciblity it’s best to always run the code in an empty environment.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongSeedstrongcodesetseed1code"> <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> <strong>Seed:</strong> <code>set.seed(1)</code> </a>
+</p>
+</div>
+<div id="strongSeedstrongcodesetseed1code" class="panel-collapse collapse">
+<div class="panel-body">
+<p>The command <code>set.seed(1)</code> was run prior to running the code in the R Markdown file. Setting a seed ensures that any results that rely on randomness, e.g. subsampling or permutations, are reproducible.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongSessioninformationstrongrecorded"> <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> <strong>Session information:</strong> recorded </a>
+</p>
+</div>
+<div id="strongSessioninformationstrongrecorded" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! Recording the operating system, R version, and package versions is critical for reproducibility.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongCachestrongnone"> <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> <strong>Cache:</strong> none </a>
+</p>
+</div>
+<div id="strongCachestrongnone" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Nice! There were no cached chunks for this analysis, so you can be confident that you successfully produced the results during this run.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongFilepathsstrongrelative"> <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> <strong>File paths:</strong> relative </a>
+</p>
+</div>
+<div id="strongFilepathsstrongrelative" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! Using relative paths to the files within your workflowr project makes it easier to run your code on other machines.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcompcarbovgapoistreed999aa5df1c861673ed1b99657f88883e3e83902targetblankd999aa5a"> <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> <strong>Repository version:</strong> <a href="https://github.com/pcarbo/vgapois/tree/d999aa5df1c861673ed1b99657f88883e3e83902" target="_blank">d999aa5</a> </a>
+</p>
+</div>
+<div id="strongRepositoryversionstrongahrefhttpsgithubcompcarbovgapoistreed999aa5df1c861673ed1b99657f88883e3e83902targetblankd999aa5a" class="panel-collapse collapse">
+<div class="panel-body">
+<p>
+Great! You are using Git for version control. Tracking code development and connecting the code version to the results is critical for reproducibility.
+</p>
+<p>
+The results in this page were generated with repository version <a href="https://github.com/pcarbo/vgapois/tree/d999aa5df1c861673ed1b99657f88883e3e83902" target="_blank">d999aa5</a>. See the <em>Past versions</em> tab to see a history of the changes made to the R Markdown and HTML files.
+</p>
+<p>
+Note that you need to be careful to ensure that all relevant files for the analysis have been committed to Git prior to generating the results (you can use <code>wflow_publish</code> or <code>wflow_git_commit</code>). workflowr only checks the R Markdown file, but you know if there are other scripts or data files that it depends on. Below is the status of the Git repository when the results were generated:
+</p>
+<pre><code>
+working directory clean
+</code></pre>
+<p>
+Note that any generated files, e.g. HTML, png, CSS, etc., are not included in this status report because it is ok for generated content to have uncommitted changes.
+</p>
+</div>
+</div>
+</div>
+</div>
+<hr>
+</div>
+<div id="versions" class="tab-pane fade">
+
+<p>
+These are the previous versions of the repository in which changes were made to the R Markdown (<code>analysis/vgapois_demo_1d.Rmd</code>) and HTML (<code>docs/vgapois_demo_1d.html</code>) files. If you’ve configured a remote Git repository (see <code>?wflow_git_remote</code>), click on the hyperlinks in the table below to view the files as they were in that past version.
+</p>
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+File
+</th>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+<th>
+Message
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+Rmd
+</td>
+<td>
+<a href="https://github.com/pcarbo/vgapois/blob/d999aa5df1c861673ed1b99657f88883e3e83902/analysis/vgapois_demo_1d.Rmd" target="_blank">d999aa5</a>
+</td>
+<td>
+Peter Carbonetto
+</td>
+<td>
+2020-10-09
+</td>
+<td>
+workflowr::wflow_publish(“vgapois_demo_1d.Rmd”)
+</td>
+</tr>
+<tr>
+<td>
+Rmd
+</td>
+<td>
+<a href="https://github.com/pcarbo/vgapois/blob/c5d520620af027f0046a6bb705ae46af32ff7853/analysis/vgapois_demo_1d.Rmd" target="_blank">c5d5206</a>
+</td>
+<td>
+Peter Carbonetto
+</td>
+<td>
+2020-10-09
+</td>
+<td>
+Added workflowr files.
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<hr>
+</div>
+</div>
+</div>
+<p><em>Add text here.</em></p>
+<pre class="r"><code>source(&quot;../code/vgapois.R&quot;)
+set.seed(1)</code></pre>
+<div id="simulate-data" class="section level2">
+<h2>Simulate data</h2>
+<pre class="r"><code>n  &lt;- 10
+b0 &lt;- -1
+b  &lt;- 1.5
+x  &lt;- rnorm(n)
+r  &lt;- exp(b0 + x*b)
+y  &lt;- rpois(n,r)</code></pre>
+</div>
+<div id="compute-importance-sampling-estimate-of-marginal-likelihood" class="section level2">
+<h2>Compute importance sampling estimate of marginal likelihood</h2>
+<pre class="r"><code>s0 &lt;- 3
+ns &lt;- 1e5
+b  &lt;- rnorm(ns,sd = sqrt(s0))
+w  &lt;- rep(0,ns)
+for (i in 1:ns)
+  w[i] &lt;- compute_loglik_pois(x,y,b0,b[i])
+a &lt;- max(w)
+lnZ &lt;- log(mean(exp(w - a))) + a</code></pre>
+</div>
+<div id="fit-variational-approximation" class="section level2">
+<h2>Fit variational approximation</h2>
+<pre class="r"><code>fit &lt;- vgapois1(x,y,b0,s0)
+mu  &lt;- fit$par[&quot;mu&quot;]
+s   &lt;- fit$par[&quot;s&quot;]
+print(compute_elbo_vgapois1(x,y,b0,s0,mu,s),digits = 6)
+# N = 2, M = 5 machine precision = 2.22045e-16
+# L = -inf 1e-15 
+# X0 = 0 1 
+# U = inf inf 
+# At X0, 0 variables are exactly at the bounds
+# At iterate     0  f=       12.879  |proj g|=       2.6103
+# Iteration     0
+# 
+# ---------------- CAUCHY entered-------------------
+# 
+# There are 1  breakpoints
+# 
+# Piece      1 f1, f2 at start point -1.1137e+01  1.1137e+01
+# Distance to the next break point =   4.8095e-01
+# Distance to the stationary point =   1.0000e+00
+# Variable  2  is fixed.
+# 
+# GCP found in this segment
+# Piece      2 f1, f2 at start point -3.5367e+00  6.8139e+00
+# Distance to the stationary point =   5.1905e-01
+# Cauchy X =  2.61034 1e-15 
+# 
+# ---------------- exit CAUCHY----------------------
+# 
+# 1  variables are free at GCP on iteration 1
+# LINE SEARCH 0 times; norm of step = 1
+# X = 0.933822 0.642261 
+# G = 2.77367 4.7579 
+# Iteration     1
+# 
+# ---------------- CAUCHY entered-------------------
+# 
+# There are 1  breakpoints
+# 
+# Piece      1 f1, f2 at start point -3.0331e+01  4.5078e+02
+# Distance to the next break point =   1.3499e-01
+# Distance to the stationary point =   6.7285e-02
+# 
+# GCP found in this segment
+# Piece      1 f1, f2 at start point -3.0331e+01  4.5078e+02
+# Distance to the stationary point =   6.7285e-02
+# Cauchy X =  0.747195 0.322126 
+# 
+# ---------------- exit CAUCHY----------------------
+# 
+# Variable 2 enters the set of free variables
+# 0 variables leave; 1 variables enter
+# 2  variables are free at GCP on iteration 2
+# LINE SEARCH 1 times; norm of step = 0.253669
+# X = 0.987541 0.394346 
+# G = 1.61641 3.27392 
+# Iteration     2
+# 
+# ---------------- CAUCHY entered-------------------
+# 
+# There are 1  breakpoints
+# 
+# Piece      1 f1, f2 at start point -1.3331e+01  1.7626e+02
+# Distance to the next break point =   1.2045e-01
+# Distance to the stationary point =   7.5634e-02
+# 
+# GCP found in this segment
+# Piece      1 f1, f2 at start point -1.3331e+01  1.7626e+02
+# Distance to the stationary point =   7.5634e-02
+# Cauchy X =  0.865286 0.146727 
+# 
+# ---------------- exit CAUCHY----------------------
+# 
+# 2  variables are free at GCP on iteration 3
+# LINE SEARCH 1 times; norm of step = 0.139074
+# X = 0.99301 0.255379 
+# G = 0.879783 1.98679 
+# Iteration     3
+# 
+# ---------------- CAUCHY entered-------------------
+# 
+# There are 1  breakpoints
+# 
+# Piece      1 f1, f2 at start point -4.7214e+00  6.2208e+01
+# Distance to the next break point =   1.2854e-01
+# Distance to the stationary point =   7.5896e-02
+# 
+# GCP found in this segment
+# Piece      1 f1, f2 at start point -4.7214e+00  6.2208e+01
+# Distance to the stationary point =   7.5896e-02
+# Cauchy X =  0.926238 0.104589 
+# 
+# ---------------- exit CAUCHY----------------------
+# 
+# 2  variables are free at GCP on iteration 4
+# LINE SEARCH 1 times; norm of step = 0.0908631
+# X = 1.01968 0.168519 
+# G = 0.648301 0.761998 
+# Iteration     4
+# 
+# ---------------- CAUCHY entered-------------------
+# 
+# There are 1  breakpoints
+# 
+# Piece      1 f1, f2 at start point -1.0009e+00  1.5697e+01
+# Distance to the next break point =   2.2115e-01
+# Distance to the stationary point =   6.3768e-02
+# 
+# GCP found in this segment
+# Piece      1 f1, f2 at start point -1.0009e+00  1.5697e+01
+# Distance to the stationary point =   6.3768e-02
+# Cauchy X =  0.97834 0.119928 
+# 
+# ---------------- exit CAUCHY----------------------
+# 
+# 2  variables are free at GCP on iteration 5
+# LINE SEARCH 0 times; norm of step = 0.100318
+# X = 0.921671 0.14712 
+# G = -0.126003 -0.180958 
+# Iteration     5
+# 
+# ---------------- CAUCHY entered-------------------
+# 
+# There are 0  breakpoints
+# 
+# GCP found in this segment
+# Piece      1 f1, f2 at start point -4.8622e-02  9.4136e-01
+# Distance to the stationary point =   5.1651e-02
+# Cauchy X =  0.92818 0.156466 
+# 
+# ---------------- exit CAUCHY----------------------
+# 
+# 2  variables are free at GCP on iteration 6
+# LINE SEARCH 0 times; norm of step = 0.0151149
+# X = 0.935665 0.152832 
+# G = -0.0114464 0.0223763 
+# Iteration     6
+# 
+# ---------------- CAUCHY entered-------------------
+# 
+# There are 1  breakpoints
+# 
+# Piece      1 f1, f2 at start point -6.3172e-04  9.0129e-03
+# Distance to the next break point =   6.8301e+00
+# Distance to the stationary point =   7.0091e-02
+# 
+# GCP found in this segment
+# Piece      1 f1, f2 at start point -6.3172e-04  9.0129e-03
+# Distance to the stationary point =   7.0091e-02
+# Cauchy X =  0.936468 0.151263 
+# 
+# ---------------- exit CAUCHY----------------------
+# 
+# 2  variables are free at GCP on iteration 7
+# LINE SEARCH 0 times; norm of step = 0.0042122
+# X = 0.939401 0.150886 
+# G = 0.0050822 -0.01076 
+# Iteration     7
+# 
+# ---------------- CAUCHY entered-------------------
+# 
+# There are 0  breakpoints
+# 
+# GCP found in this segment
+# Piece      1 f1, f2 at start point -1.4161e-04  2.6096e-03
+# Distance to the stationary point =   5.4263e-02
+# Cauchy X =  0.939126 0.15147 
+# 
+# ---------------- exit CAUCHY----------------------
+# 
+# 2  variables are free at GCP on iteration 8
+# LINE SEARCH 0 times; norm of step = 0.00132129
+# X = 0.938236 0.15151 
+# G = -3.54695e-06 0.000115329 
+# Iteration     8
+# 
+# ---------------- CAUCHY entered-------------------
+# 
+# There are 1  breakpoints
+# 
+# Piece      1 f1, f2 at start point -1.3313e-08  3.3087e-07
+# Distance to the next break point =   1.3137e+03
+# Distance to the stationary point =   4.0237e-02
+# 
+# GCP found in this segment
+# Piece      1 f1, f2 at start point -1.3313e-08  3.3087e-07
+# Distance to the stationary point =   4.0237e-02
+# Cauchy X =  0.938237 0.151505 
+# 
+# ---------------- exit CAUCHY----------------------
+# 
+# 2  variables are free at GCP on iteration 9
+# LINE SEARCH 0 times; norm of step = 6.45625e-06
+# X = 0.93824 0.151505 
+# G = -1.89279e-07 1.09575e-07 
+# Iteration     9
+# 
+# ---------------- CAUCHY entered-------------------
+# 
+# There are 1  breakpoints
+# 
+# Piece      1 f1, f2 at start point -4.7833e-14  3.6496e-13
+# Distance to the next break point =   1.3827e+06
+# Distance to the stationary point =   1.3107e-01
+# 
+# GCP found in this segment
+# Piece      1 f1, f2 at start point -4.7833e-14  3.6496e-13
+# Distance to the stationary point =   1.3107e-01
+# Cauchy X =  0.93824 0.151505 
+# 
+# ---------------- exit CAUCHY----------------------
+# 
+# 2  variables are free at GCP on iteration 10
+# LINE SEARCH 0 times; norm of step = 3.66473e-08
+# X = 0.93824 0.151505 
+# G = 5.47063e-10 3.91771e-10 
+# 
+# iterations 10
+# function evaluations 14
+# segments explored during Cauchy searches 11
+# BFGS updates skipped 0
+# active bounds at final generalized Cauchy point 0
+# norm of the final projected gradient 5.47063e-10
+# final function value 10.1593
+# 
+# X = 0.93824 0.151505 
+# F = 10.1593
+# final  value 10.159268 
+# converged
+#       mu 
+# -10.1593</code></pre>
+</div>
+<div id="compare-exact-and-approximate-posterior-distributions" class="section level2">
+<h2>Compare exact and approximate posterior distributions</h2>
+<pre class="r"><code>b    &lt;- seq(-1,3,length.out = 1000)
+n    &lt;- length(b)
+logp &lt;- rep(0,n)
+qb   &lt;- dnorm(b,mu,sqrt(s))
+for (i in 1:n)
+  logp[i] &lt;- compute_logp_pois(x,y,b0,b[i],s0)
+maxlp &lt;- max(logp)
+plot(b,exp(logp - maxlp),type = &quot;l&quot;,lwd = 2,col = &quot;dodgerblue&quot;,
+     xlab = &quot;b&quot;,ylab = &quot;relative posterior&quot;)
+lines(b,qb/max(qb),col = &quot;magenta&quot;,lwd = 2)</code></pre>
+<p><img src="figure/vgapois_demo_1d.Rmd/unnamed-chunk-5-1.png" width="360" style="display: block; margin: auto;" /></p>
+<br>
+<p>
+<button type="button" class="btn btn-default btn-workflowr btn-workflowr-sessioninfo" data-toggle="collapse" data-target="#workflowr-sessioninfo" style="display: block;">
+<span class="glyphicon glyphicon-wrench" aria-hidden="true"></span> Session information
+</button>
+</p>
+<div id="workflowr-sessioninfo" class="collapse">
+<pre class="r"><code>sessionInfo()
+# R version 3.6.2 (2019-12-12)
+# Platform: x86_64-apple-darwin15.6.0 (64-bit)
+# Running under: macOS Catalina 10.15.6
+# 
+# Matrix products: default
+# BLAS:   /Library/Frameworks/R.framework/Versions/3.6/Resources/lib/libRblas.0.dylib
+# LAPACK: /Library/Frameworks/R.framework/Versions/3.6/Resources/lib/libRlapack.dylib
+# 
+# locale:
+# [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+# 
+# attached base packages:
+# [1] stats     graphics  grDevices utils     datasets  methods   base     
+# 
+# loaded via a namespace (and not attached):
+#  [1] workflowr_1.6.2.9000 Rcpp_1.0.5           rprojroot_1.3-2     
+#  [4] digest_0.6.23        later_1.0.0          R6_2.4.1            
+#  [7] backports_1.1.5      git2r_0.26.1         magrittr_1.5        
+# [10] evaluate_0.14        stringi_1.4.3        rlang_0.4.5         
+# [13] fs_1.3.1             promises_1.1.0       whisker_0.4         
+# [16] rmarkdown_2.3        tools_3.6.2          stringr_1.4.0       
+# [19] glue_1.3.1           httpuv_1.5.2         xfun_0.11           
+# [22] yaml_2.2.0           compiler_3.6.2       htmltools_0.4.0     
+# [25] knitr_1.26</code></pre>
+</div>
+</div>
+
+
+<!-- Adjust MathJax settings so that all math formulae are shown using
+TeX fonts only; see
+http://docs.mathjax.org/en/latest/configuration.html.  This will make
+the presentation more consistent at the cost of the webpage sometimes
+taking slightly longer to load. Note that this only works because the
+footer is added to webpages before the MathJax javascript. -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    "HTML-CSS": { availableFonts: ["TeX"] }
+  });
+</script>
+
+
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
+</script>
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
