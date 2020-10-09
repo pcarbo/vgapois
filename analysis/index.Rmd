@@ -9,3 +9,7 @@ Follow the links to below to review the results of my analyses.
 
 + [Illustration of the variational approximation applied to a
    problem with one unknown.](vgapois_demo_1d.html)
+
++ [Accompanying derivations in Overleaf.][overleaf]
+
+[overleaf]: https://www.overleaf.com/read/fbwkmbcjzctc
