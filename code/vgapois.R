@@ -42,8 +42,12 @@ compute_logp_pois <- function (x, y, b0, b, s0)
 # a description of the input arguments.
 compute_elbo_vgapois1 <- function (x, y, b0, s0, mu, s) {
   r <- b0 + x*mu
-  return(sum(y*r) - sum(exp(r + x^2*s/2)) - sum(lfactorial(y)) +
-         (1 - mu^2/s0 - s/s0 + log(s) - log(s0))/2)
+  u <- exp(r + s*x^2/2)
+  f <- (sum(y*r) - sum(u) - sum(lfactorial(y)) +
+        (1 - mu^2/s0 - s/s0 + log(s) - log(s0))/2)
+  g <- sum(dpois(y,u,log = TRUE) - y*s*x^2/2) - kl_norm(0,mu,s0,s)
+  print(f - g)
+  return(f)
 }
 
 # Compute the gradient of the ELBO with respect to the mean (mu) and
@@ -55,3 +59,11 @@ compute_elbo_grad_vgapois1 <- function (x, y, b0, s0, mu, s) {
   return(c(sum(y*x) - sum(x*u) - mu/s0,
            (1/s - 1/s0 - sum(x^2*u))/2))
 }
+
+# Return the Kullback-Leibler divergence KL(p1 || p2) between two
+# (univariate) normal distributions p1 and p2, where p1 is normal with
+# mean mu1 and variance s1, and p2 is normal with mean mu2 and
+# variance s2.
+kl_norm <- function (mu1, mu2, s1, s2)
+  (log(s1/s2) + s2/s1 - 1  + (mu1 - mu2)^2/s1)/2
+
