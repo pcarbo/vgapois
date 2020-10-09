@@ -6,21 +6,24 @@
 # implementation efficient, or the code concise.
 vgapois1 <- function (x, y, b0, s0, mu = 0, s = 1, numiter = 100) {
   f <- function (par)
-    -compute_elbo_vgapois1(x,y,b0,s0,par[1],par[2]^2)
+    -compute_elbo_vgapois1(x,y,b0,s0,par[1],par[2])
   g <- function (par)
-    -c(1,2*par[2]) * compute_elbo_grad_vgapois1(x,y,b0,s0,par[1],par[2]^2)
-  out <- optim(c(mu,sqrt(s)),f,g,method = "L-BFGS-B",
+    -compute_elbo_grad_vgapois1(x,y,b0,s0,par[1],par[2])
+  out <- optim(c(mu,s),f,g,method = "L-BFGS-B",lower = c(-Inf,1e-15),
                control = list(factr = 1e5,maxit = 100,trace = 6))
   names(out$par) <- c("mu","s")
-  out$par["s"] <- out$par["s"]^2
   return(out)
 }
 
 # TO DO: Explain here what this function does, and how to use it.
-compute_logp_pois <- function (x, y, b0, b, s0) {
+compute_loglik_pois <- function (x, y, b0, b) {
   r <- b0 + x*b
-  return(sum(dpois(y,exp(r),log = TRUE)) + dnorm(b,sd = s0^2,log = TRUE))
+  return(sum(dpois(y,exp(r),log = TRUE)))
 }
+
+# TO DO: Explain here what this function does, and how to use it.
+compute_logp_pois <- function (x, y, b0, b, s0)
+  compute_loglik_pois(x,y,b0,b) + dnorm(b,sd = sqrt(s0),log = TRUE)
 
 # TO DO: Explain here what this function does, and how to use it.
 compute_elbo_vgapois1 <- function (x, y, b0, s0, mu, s) {

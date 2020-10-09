@@ -6,16 +6,17 @@ set.seed(1)
 # SIMULATE DATA
 # -------------
 # TO DO: Explain here what these lines of code do.
-n <- 10
+n  <- 10
 b0 <- -1
-b <- 1.5
-x <- rnorm(n)
-r <- exp(b0 + x*b)
-y <- rpois(n,r)
+b  <- 1.5
+x  <- rnorm(n)
+r  <- exp(b0 + x*b)
+y  <- rpois(n,r)
 
 # PLOT ELBO SURFACE
 # -----------------
 # TO DO: Explain here what these lines of code do.
+s0   <- 3
 mu   <- seq(-1,2.5,length.out = 50)
 s    <- 10^seq(-3,0,length.out = 50)
 out  <- meshgrid(s,mu)
@@ -28,8 +29,16 @@ for (i in 1:n)
 contour(mu,s,elbo,col = "dodgerblue",nlevels = 24,
         xlab = "mu",ylab = "s")
 
-# TO DO: Compute importance sampling estimate of marginal likelihood.
-
+# COMPUTE IMPORTANCE SAMPLING ESTIMATE
+# ------------------------------------
+ns <- 1e5
+b  <- rnorm(ns,sd = sqrt(s0))
+w  <- rep(0,ns)
+for (i in 1:ns)
+  w[i] <- compute_loglik_pois(x,y,b0,b[i])
+a <- max(w)
+lnZ <- log(mean(exp(w - a))) + a
+    
 # FIT VARIATIONAL APPROXIMATION
 # -----------------------------
 # TO DO: Explain here what these lines of code do.
@@ -42,7 +51,6 @@ points(mu,s,pch = 4,col = "magenta")
 # PLOT (EXACT) POSTERIOR SURFACE
 # ------------------------------
 # TO DO: Explain here what these lines of code do.
-s0   <- 10
 b    <- seq(-1,3,length.out = 1000)
 n    <- length(b)
 logp <- rep(0,n)
