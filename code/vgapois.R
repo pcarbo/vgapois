@@ -10,12 +10,13 @@ vgapois1 <- function (x, y, b0, s0, mu = 0, s = 1, numiter = 100) {
   g <- function (par)
     -compute_elbo_grad_vgapois1(x,y,b0,s0,par[1],par[2])
   out <- optim(c(mu,s),f,g,method = "L-BFGS-B",lower = c(-Inf,1e-15),
-               control = list(factr = 1e5,maxit = 100,trace = 6))
+               control = list(factr = 1e5,maxit = 100,trace = 10))
   names(out$par) <- c("mu","s")
   return(out)
 }
 
-# TO DO: Explain here what this function does, and how to use it.
+# Compute the log-likelihood of the counts, y, under the Poisson model.
+# See function vgapois1 for details.
 compute_loglik_pois <- function (x, y, b0, b) {
   r <- b0 + x*b
   return(sum(dpois(y,exp(r),log = TRUE)))
