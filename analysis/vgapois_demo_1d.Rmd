@@ -35,8 +35,8 @@ Simulate counts from the following Poisson model: $y_i \sim
 
 ```{r sim-data}
 n <- 10
-a <- rnorm(n,mean = -2)
 b <- 1
+a <- rnorm(n,mean = -2)
 x <- rnorm(n)
 r <- a + x*b
 y <- rpois(n,exp(r))
@@ -55,7 +55,7 @@ ns   <- 1e5
 b    <- rnorm(ns,sd = sqrt(s0))
 logw <- rep(0,ns)
 for (i in 1:ns)
-  logw[i] <- compute_loglik_pois(x,y,a,b[i])
+  logw[i] <- compute_loglik_pois1(x,y,a,b[i])
 d    <- max(logw)
 logZ <- log(mean(exp(logw - d))) + d
 ```
@@ -86,7 +86,7 @@ ns   <- 1000
 b    <- seq(-1,3,length.out = ns)
 logp <- rep(0,ns)
 for (i in 1:ns)
-  logp[i] <- compute_logp_pois(x,y,a,b[i],s0)
+  logp[i] <- compute_logp_pois1(x,y,a,b[i],s0)
 par(mar = c(4,4,1,0))
 plot(b,exp(logp - max(logp)),type = "l",lwd = 2,col = "darkblue",
      xlab = "b",ylab = "posterior")
