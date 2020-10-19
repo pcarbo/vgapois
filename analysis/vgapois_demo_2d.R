@@ -25,7 +25,7 @@ d    <- max(logw)
 logZ <- log(mean(exp(logw - d))) + d
 
 # Fit variational approximation.
-fit <- vgapois(X,Y,A,S0)
+fit <- vgapois(X,Y,A,S0,S = diag(2)/60)
 cat(fit$message,"\n")
 cat(sprintf("Monte Carlo estimate:    %0.12f\n",logZ))
 cat(sprintf("Variational lower bound: %0.12f\n",-fit$value))
