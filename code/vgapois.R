@@ -28,19 +28,34 @@ vgapois1 <- function (x, y, a, s0, mu = 0, s = 1, factr = 1e5,
 # TO DO: Explain here what this function does, and how to use it.
 vgapois <- function (X, Y, A, S0, mu = rep(0,ncol(X)), S = diag(ncol(X)),
                      factr = 1e5, maxit = 100, ...) {
-  f <- function (mu)
-    -compute_elbo_vgapois(X,Y,A,S0,mu,S)
-  g <- function (mu)
-    -compute_elbo_grad_vgapois(X,Y,A,S0,mu,S)
-  out <- optim(mu,f,g,method = "L-BFGS-B",
+  f <- function (par) {
+    par <- get_vgapois_par(par)
+    return(-compute_elbo_vgapois(X,Y,A,S0,par$mu,par$S))
+  }
+  g <- function (par) {
+    par <- get_vgapois_par(par)
+    ans <- compute_elbo_grad_vgapois(X,Y,A,S0,par$mu,par$S)
+    ans$S <- ans$S * (par$S + t(par$S))
+    return(-c(ans$mu,ans$S[upper.tri(ans$S,diag = TRUE)]))
+  }
+  R   <- chol(S)
+  par <- c(mu,R[upper.tri(chol(R),diag = TRUE)])
+  out <- optim(par,f,g,method = "L-BFGS-B",
                control = list(factr = factr,maxit = maxit,...))
-  out$mu <- out$par
+  ans    <- get_vgapois_par(out$par)
+  out$mu <- ans$mu
+  out$S  <- ans$S
   return(out)
 }
 
 # TO DO: Explain here what this function does, and how to use it,
-get_vgapois_params <- function (par, n) {
-
+get_vgapois_par <- function (par) {
+  n   <- (sqrt(1 + 8*length(par)) - 1)/2
+  mu  <- par[1:n]
+  par <- par[-(1:n)]
+  R <- matrix(0,n,n)
+  R[upper.tri(R,diag = TRUE)] <- par
+  return(list(mu = mu,S = crossprod(R) + 1e-15*diag(n)))
 }
 
 # Compute the log-likelihood of the counts, y, under the univariate
@@ -107,18 +122,20 @@ compute_elbo_grad_vgapois1 <- function (x, y, a, s0, mu, s) {
 
 # TO DO: Explain here what this function does, and how to use it.
 compute_elbo_grad_vgapois <- function (X, Y, A, S0, mu, S) {
-  n <- nrow(X)
-  m <- ncol(X)
+  n   <- nrow(X)
+  m   <- ncol(X)
   gmu <- -solve(S0,mu)
+  gS  <- (solve(S) - solve(S0))/2
   for (i in 1:n) {
     x <- X[i,]
     y <- Y[i,]  
     a <- A[i,]
     r <- a + x*mu  # mean log-rates
     u <- r + diag(diag(x) %*% S %*% diag(x))/2 # "overdispersed" log-rates
-    gmu <- g + x*(y - exp(u))
+    gmu <- gmu + x*(y - exp(u))
+    gS  <- gS - diag(x^2*exp(u))/2
   }
-  return(gmu)
+  return(list(mu = gmu,S = gS))
 }
 
 # Return the Kullback-Leibler divergence KL(p1 || p2) between two
