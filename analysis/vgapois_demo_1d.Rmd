@@ -49,7 +49,7 @@ Here we compute an importance sampling estimate of the marginal
 log-likelihood We will compare this against the lower bound to the
 marginal likelihood obtained by the variational approximation.
 
-```{r importance-sampling}
+```{r importance-sampling-1}
 s0   <- 3
 ns   <- 1e5
 b    <- rnorm(ns,sd = sqrt(s0))
@@ -60,6 +60,15 @@ d    <- max(logw)
 logZ <- log(mean(exp(logw - d))) + d
 ```
 
+Compute importance sampling estimates of the mean and variance.
+
+```{r importance-sampling-2}
+w     <- exp(logw - d)
+w     <- w/sum(w)
+mu.mc <- sum(w*b)
+s.mc  <- sum(w*b^2) - mu.mc^2
+```
+
 Fit variational approximation
 -----------------------------
 
@@ -68,6 +77,8 @@ variational lower bound (the "ELBO").
 
 ```{r fit-vga}
 fit <- vgapois1(x,y,a,s0)
+mu  <- fit$par["mu"]
+s   <- fit$par["s"]
 cat(fit$message,"\n")
 cat(sprintf("Monte Carlo estimate:    %0.12f\n",logZ))
 cat(sprintf("Variational lower bound: %0.12f\n",-fit$value))
@@ -78,10 +89,18 @@ Here we see that the ELBO slightly undershoots the marginal likelihood.
 Compare exact and approximate posterior distributions
 -----------------------------------------------------
 
+Compare the importance sampling and variational estimates of the mean
+and standard deviation.
+
+```{r compare-1}
+cat(sprintf("Monte Carlo estimates: mean=%0.4f, sd=%0.4f\n",mu.mc,sqrt(s.mc)))
+cat(sprintf("Variational estimates: mean=%0.4f, sd=%0.4f\n",mu,sqrt(s)))
+```
+
 Plot the exact posterior density (dark blue), and compare it against the
 variational Gaussian approximation (magenta).
 
-```{r, fig.height=2.5, fig.width=4}
+```{r compare-2, fig.height=2.5, fig.width=4}
 ns   <- 1000
 b    <- seq(-1,3,length.out = ns)
 logp <- rep(0,ns)
@@ -90,8 +109,6 @@ for (i in 1:ns)
 par(mar = c(4,4,1,0))
 plot(b,exp(logp - max(logp)),type = "l",lwd = 2,col = "darkblue",
      xlab = "b",ylab = "posterior")
-mu <- fit$par["mu"]
-s  <- fit$par["s"]
 pv <- dnorm(b,mu,sqrt(s))
 lines(b,pv/max(pv),col = "magenta",lwd = 2)
 ```
