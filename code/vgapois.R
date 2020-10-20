@@ -26,8 +26,9 @@ vgapois1 <- function (x, y, a, s0, mu = 0, s = 1, factr = 1e5,
 }
 
 # TO DO: Explain here what this function does, and how to use it.
-vgapois <- function (X, Y, A, S0, mu = rep(0,ncol(X)), S = diag(ncol(X)),
-                     factr = 1e5, maxit = 100, ...) {
+vgapois <- function (X, Y, A, S0, mu = rep(0,ncol(X)),
+                     S = diag(ncol(X)) + 0.01, factr = 1e5,
+                     maxit = 100, ...) {
   f <- function (par) {
     par <- get_vgapois_par(par)
     return(-compute_elbo_vgapois(X,Y,A,S0,par$mu,par$S))
