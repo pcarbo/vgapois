@@ -323,7 +323,7 @@ $(document).ready(function () {
 <div class="tab-content">
 <div id="summary" class="tab-pane fade in active">
 <p>
-<strong>Last updated:</strong> 2020-10-14
+<strong>Last updated:</strong> 2020-10-19
 </p>
 <p>
 <strong>Checks:</strong> <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> 7 <span class="glyphicon glyphicon-exclamation-sign text-danger" aria-hidden="true"></span> 0
@@ -414,16 +414,16 @@ This reproducible <a href="http://rmarkdown.rstudio.com">R Markdown</a> analysis
 <div class="panel panel-default">
 <div class="panel-heading">
 <p class="panel-title">
-<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcompcarbovgapoistree6d5bfa0ef1b3ef6f9b4c16c2040e278deccd77aatargetblank6d5bfa0a"> <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> <strong>Repository version:</strong> <a href="https://github.com/pcarbo/vgapois/tree/6d5bfa0ef1b3ef6f9b4c16c2040e278deccd77aa" target="_blank">6d5bfa0</a> </a>
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcompcarbovgapoistree3cf531bfb0f87b3416113a6e7822c18d23d0babbtargetblank3cf531ba"> <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> <strong>Repository version:</strong> <a href="https://github.com/pcarbo/vgapois/tree/3cf531bfb0f87b3416113a6e7822c18d23d0babb" target="_blank">3cf531b</a> </a>
 </p>
 </div>
-<div id="strongRepositoryversionstrongahrefhttpsgithubcompcarbovgapoistree6d5bfa0ef1b3ef6f9b4c16c2040e278deccd77aatargetblank6d5bfa0a" class="panel-collapse collapse">
+<div id="strongRepositoryversionstrongahrefhttpsgithubcompcarbovgapoistree3cf531bfb0f87b3416113a6e7822c18d23d0babbtargetblank3cf531ba" class="panel-collapse collapse">
 <div class="panel-body">
 <p>
 Great! You are using Git for version control. Tracking code development and connecting the code version to the results is critical for reproducibility.
 </p>
 <p>
-The results in this page were generated with repository version <a href="https://github.com/pcarbo/vgapois/tree/6d5bfa0ef1b3ef6f9b4c16c2040e278deccd77aa" target="_blank">6d5bfa0</a>. See the <em>Past versions</em> tab to see a history of the changes made to the R Markdown and HTML files.
+The results in this page were generated with repository version <a href="https://github.com/pcarbo/vgapois/tree/3cf531bfb0f87b3416113a6e7822c18d23d0babb" target="_blank">3cf531b</a>. See the <em>Past versions</em> tab to see a history of the changes made to the R Markdown and HTML files.
 </p>
 <p>
 Note that you need to be careful to ensure that all relevant files for the analysis have been committed to Git prior to generating the results (you can use <code>wflow_publish</code> or <code>wflow_git_commit</code>). workflowr only checks the R Markdown file, but you know if there are other scripts or data files that it depends on. Below is the status of the Git repository when the results were generated:
@@ -469,6 +469,57 @@ Message
 </tr>
 </thead>
 <tbody>
+<tr>
+<td>
+Rmd
+</td>
+<td>
+<a href="https://github.com/pcarbo/vgapois/blob/3cf531bfb0f87b3416113a6e7822c18d23d0babb/analysis/vgapois_demo_1d.Rmd" target="_blank">3cf531b</a>
+</td>
+<td>
+Peter Carbonetto
+</td>
+<td>
+2020-10-19
+</td>
+<td>
+workflowr::wflow_publish(“vgapois_demo_1d.Rmd”)
+</td>
+</tr>
+<tr>
+<td>
+Rmd
+</td>
+<td>
+<a href="https://github.com/pcarbo/vgapois/blob/1e65ca8a641a9a24357a39d0341691ef07813479/analysis/vgapois_demo_1d.Rmd" target="_blank">1e65ca8</a>
+</td>
+<td>
+Peter Carbonetto
+</td>
+<td>
+2020-10-14
+</td>
+<td>
+Working on implementation of vgapois and accompanying demo, vgapois_demo_2d.R.
+</td>
+</tr>
+<tr>
+<td>
+html
+</td>
+<td>
+<a href="https://rawcdn.githack.com/pcarbo/vgapois/0ce1a875404fd16dd1c3c5047a0bb3c80c4c35b7/docs/vgapois_demo_1d.html" target="_blank">0ce1a87</a>
+</td>
+<td>
+Peter Carbonetto
+</td>
+<td>
+2020-10-14
+</td>
+<td>
+Fixed expressions in vgapois_demo_1d example.
+</td>
+</tr>
 <tr>
 <td>
 Rmd
@@ -790,8 +841,8 @@ set.seed(1)</code></pre>
 <h2>Simulate data</h2>
 <p>Simulate counts from the following Poisson model: <span class="math inline">\(y_i \sim \mathrm{Poisson}(e^{\lambda_i})\)</span>, in which <span class="math inline">\(\lambda_i = a_i + b x_i\)</span>.</p>
 <pre class="r"><code>n &lt;- 10
-a &lt;- rnorm(n,mean = -2)
 b &lt;- 1
+a &lt;- rnorm(n,mean = -2)
 x &lt;- rnorm(n)
 r &lt;- a + x*b
 y &lt;- rpois(n,exp(r))</code></pre>
@@ -804,14 +855,21 @@ ns   &lt;- 1e5
 b    &lt;- rnorm(ns,sd = sqrt(s0))
 logw &lt;- rep(0,ns)
 for (i in 1:ns)
-  logw[i] &lt;- compute_loglik_pois(x,y,a,b[i])
+  logw[i] &lt;- compute_loglik_pois1(x,y,a,b[i])
 d    &lt;- max(logw)
 logZ &lt;- log(mean(exp(logw - d))) + d</code></pre>
+<p>Compute importance sampling estimates of the mean and variance.</p>
+<pre class="r"><code>w     &lt;- exp(logw - d)
+w     &lt;- w/sum(w)
+mu.mc &lt;- sum(w*b)
+s.mc  &lt;- sum(w*b^2) - mu.mc^2</code></pre>
 </div>
 <div id="fit-variational-approximation" class="section level2">
 <h2>Fit variational approximation</h2>
 <p>Fit the variational Gaussian approximation by optimizing the variational lower bound (the “ELBO”).</p>
 <pre class="r"><code>fit &lt;- vgapois1(x,y,a,s0)
+mu  &lt;- fit$par[&quot;mu&quot;]
+s   &lt;- fit$par[&quot;s&quot;]
 cat(fit$message,&quot;\n&quot;)
 cat(sprintf(&quot;Monte Carlo estimate:    %0.12f\n&quot;,logZ))
 cat(sprintf(&quot;Variational lower bound: %0.12f\n&quot;,-fit$value))
@@ -822,101 +880,23 @@ cat(sprintf(&quot;Variational lower bound: %0.12f\n&quot;,-fit$value))
 </div>
 <div id="compare-exact-and-approximate-posterior-distributions" class="section level2">
 <h2>Compare exact and approximate posterior distributions</h2>
+<p>Compare the importance sampling and variational estimates of the mean and standard deviation.</p>
+<pre class="r"><code>cat(sprintf(&quot;Monte Carlo estimates: mean=%0.4f, sd=%0.4f\n&quot;,mu.mc,sqrt(s.mc)))
+cat(sprintf(&quot;Variational estimates: mean=%0.4f, sd=%0.4f\n&quot;,mu,sqrt(s)))
+# Monte Carlo estimates: mean=0.8570, sd=0.5124
+# Variational estimates: mean=0.8573, sd=0.5063</code></pre>
 <p>Plot the exact posterior density (dark blue), and compare it against the variational Gaussian approximation (magenta).</p>
 <pre class="r"><code>ns   &lt;- 1000
 b    &lt;- seq(-1,3,length.out = ns)
 logp &lt;- rep(0,ns)
 for (i in 1:ns)
-  logp[i] &lt;- compute_logp_pois(x,y,a,b[i],s0)
+  logp[i] &lt;- compute_logp_pois1(x,y,a,b[i],s0)
 par(mar = c(4,4,1,0))
 plot(b,exp(logp - max(logp)),type = &quot;l&quot;,lwd = 2,col = &quot;darkblue&quot;,
      xlab = &quot;b&quot;,ylab = &quot;posterior&quot;)
-mu &lt;- fit$par[&quot;mu&quot;]
-s  &lt;- fit$par[&quot;s&quot;]
 pv &lt;- dnorm(b,mu,sqrt(s))
 lines(b,pv/max(pv),col = &quot;magenta&quot;,lwd = 2)</code></pre>
-<p><img src="figure/vgapois_demo_1d.Rmd/unnamed-chunk-1-1.png" width="480" style="display: block; margin: auto;" /></p>
-<p>
-<button type="button" class="btn btn-default btn-xs btn-workflowr btn-workflowr-fig" data-toggle="collapse" data-target="#fig-unnamed-chunk-1-1">
-Past versions of unnamed-chunk-1-1.png
-</button>
-</p>
-<div id="fig-unnamed-chunk-1-1" class="collapse">
-<div class="table-responsive">
-<table class="table table-condensed table-hover">
-<thead>
-<tr>
-<th>
-Version
-</th>
-<th>
-Author
-</th>
-<th>
-Date
-</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>
-<a href="https://github.com/pcarbo/vgapois/blob/7c3e7075972a8f8276e6dc378ba25f0d1e98ce8c/docs/figure/vgapois_demo_1d.Rmd/unnamed-chunk-1-1.png" target="_blank">7c3e707</a>
-</td>
-<td>
-Peter Carbonetto
-</td>
-<td>
-2020-10-14
-</td>
-</tr>
-<tr>
-<td>
-<a href="https://github.com/pcarbo/vgapois/blob/cf7ea6962d9024a78314d30e690c09bdcee0744b/docs/figure/vgapois_demo_1d.Rmd/unnamed-chunk-1-1.png" target="_blank">cf7ea69</a>
-</td>
-<td>
-Peter Carbonetto
-</td>
-<td>
-2020-10-09
-</td>
-</tr>
-<tr>
-<td>
-<a href="https://github.com/pcarbo/vgapois/blob/7fb8a9e1f937e2cc7ea67269ebb714562158e24c/docs/figure/vgapois_demo_1d.Rmd/unnamed-chunk-1-1.png" target="_blank">7fb8a9e</a>
-</td>
-<td>
-Peter Carbonetto
-</td>
-<td>
-2020-10-09
-</td>
-</tr>
-<tr>
-<td>
-<a href="https://github.com/pcarbo/vgapois/blob/c02efb3f22271d78933c5e887aa1ceb7d6d5cd86/docs/figure/vgapois_demo_1d.Rmd/unnamed-chunk-1-1.png" target="_blank">c02efb3</a>
-</td>
-<td>
-Peter Carbonetto
-</td>
-<td>
-2020-10-09
-</td>
-</tr>
-<tr>
-<td>
-<a href="https://github.com/pcarbo/vgapois/blob/03de25f07220e744bce0cece0c40a0d3f69bdc79/docs/figure/vgapois_demo_1d.Rmd/unnamed-chunk-1-1.png" target="_blank">03de25f</a>
-</td>
-<td>
-Peter Carbonetto
-</td>
-<td>
-2020-10-09
-</td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
+<p><img src="figure/vgapois_demo_1d.Rmd/compare-2-1.png" width="480" style="display: block; margin: auto;" /></p>
 <p>The true posterior is very much “bell shaped”, so as expected the normal approximation is a good fit to the true posterior.</p>
 <br>
 <p>
