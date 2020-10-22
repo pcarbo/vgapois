@@ -5,7 +5,7 @@ source("../code/vgapois.R")
 set.seed(1)
 
 # Simulate data.
-n <- 14
+n <- 16
 b <- c(1.3,1.5)
 A <- matrix(rnorm(2*n,mean = -2),n,2)
 X <- matrix(rnorm(2*n),n,2)
@@ -14,8 +14,8 @@ R <- A + scalecols(X,b)
 Y <- matrix(rpois(2*n,exp(R)),n,2)
 
 # Compute Monte Carlo estimate of marginal likelihood.
-S0   <- rbind(c(3,2.8),
-              c(2.8,3))
+S0   <- rbind(c(2,1.9),
+              c(1.9,2))
 ns   <- 1e5
 B    <- rmvnorm(ns,sigma = S0)
 logw <- rep(0,ns)

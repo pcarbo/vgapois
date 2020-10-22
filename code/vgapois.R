@@ -27,36 +27,37 @@ vgapois1 <- function (x, y, a, s0, mu = 0, s = 1, factr = 1e5,
 
 # TO DO: Explain here what this function does, and how to use it.
 vgapois <- function (X, Y, A, S0, mu = rep(0,ncol(X)),
-                     S = diag(ncol(X)) + 0.01, factr = 1e5,
+                     S = diag(ncol(X)), factr = 1e5,
                      maxit = 100, ...) {
   f <- function (par) {
-    par <- get_vgapois_par(par)
+    par <- optim2vgapois(par)
     return(-compute_elbo_vgapois(X,Y,A,S0,par$mu,par$S))
   }
-  g <- function (par) {
-    par <- get_vgapois_par(par)
-    ans <- compute_elbo_grad_vgapois(X,Y,A,S0,par$mu,par$S)
-    ans$S <- ans$S * (par$S + t(par$S))
-    return(-c(ans$mu,ans$S[upper.tri(ans$S,diag = TRUE)]))
-  }
-  R   <- chol(S)
-  par <- c(mu,R[upper.tri(chol(R),diag = TRUE)])
-  out <- optim(par,f,g,method = "L-BFGS-B",
-               control = list(factr = factr,maxit = maxit,...))
-  ans    <- get_vgapois_par(out$par)
-  out$mu <- ans$mu
-  out$S  <- ans$S
-  return(out)
+  # g <- function (par) {
+  #   par <- optim2vgapois(par)
+  #   ans <- compute_elbo_grad_vgapois(X,Y,A,S0,par$mu,par$S)
+  #   ans$S <- ans$S * (par$S + t(par$S))
+  #   return(-vgapois2optim(ans$mu,ans$S))
+  # }
+  out <- optim(vgapois2optim(mu,chol(S)),f)
+  return(c(out,optim2vgapois(out$par)))
 }
 
-# TO DO: Explain here what this function does, and how to use it,
-get_vgapois_par <- function (par) {
+# Given a mean (mu) and R = chol(S), where S is the covariance matrix,
+# return a parameter vector passed to optim. It is a vector containing
+# mu and the upper triangular portion of R = chol(S).
+vgapois2optim <- function (mu, R)
+  c(mu,R[upper.tri(R,diag = TRUE)])
+
+# Given an optim "par" vector, output the mean (mu) and covariance
+# matrix (S).
+optim2vgapois <- function (par) {
   n   <- (sqrt(1 + 8*length(par)) - 1)/2
   mu  <- par[1:n]
   par <- par[-(1:n)]
-  R <- matrix(0,n,n)
+  R   <- matrix(0,n,n)
   R[upper.tri(R,diag = TRUE)] <- par
-  return(list(mu = mu,S = crossprod(R) + 1e-15*diag(n)))
+  return(list(mu = mu,S = crossprod(R)))
 }
 
 # Compute the log-likelihood of the counts, y, under the univariate
