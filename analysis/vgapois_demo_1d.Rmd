@@ -75,13 +75,13 @@ Fit variational approximation
 Fit the variational Gaussian approximation by optimizing the
 variational lower bound (the "ELBO").
 
-```{r fit-vga}
-fit <- vgapois1(x,y,a,s0)
-mu  <- fit$par["mu"]
-s   <- fit$par["s"]
+```{r fit-vgapois-univariate}
+fit1 <- vgapois1(x,y,a,s0)
+mu   <- fit1$par["mu"]
+s    <- fit1$par["s"]
 cat(fit$message,"\n")
 cat(sprintf("Monte Carlo estimate:    %0.12f\n",logZ))
-cat(sprintf("Variational lower bound: %0.12f\n",-fit$value))
+cat(sprintf("Variational lower bound: %0.12f\n",-fit1$value))
 ```
 
 Here we see that the ELBO slightly undershoots the marginal likelihood.
@@ -115,5 +115,16 @@ lines(b,pv/max(pv),col = "magenta",lwd = 2)
 
 The true posterior is very much "bell shaped", so as expected the
 normal approximation is a good fit to the true posterior.
+
+Verify multivariate implementation
+----------------------------------
+
+*Add text here.*
+
+```{r vgapois-multivariate}
+fit <- vgapois(x,y,a,s0)
+print(mu - fit$mu)
+print(s - fit$S)
+```
 
 [overleaf]: https://www.overleaf.com/read/fbwkmbcjzctc

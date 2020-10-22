@@ -7,7 +7,7 @@
 # 
 # The optim L-BFGS-B solver is used to fit the mean and variance of
 # the normal approximation. Note that the optimal solution should be
-# unique in most cases; see Arridge et al (2018) for details.
+# unique; see Arridge et al (2018) for details.
 #
 # This implementation is meant to be "instructive"---that is, I've
 # tried to make the code as simple as possible, with an emphasis on
@@ -25,43 +25,68 @@ vgapois1 <- function (x, y, a, s0, mu = 0, s = 1, factr = 1e5,
   return(out)
 }
 
-# TO DO: Explain here what this function does, and how to use it.
-vgapois <- function (X, Y, A, S0, mu = rep(0,ncol(X)),
-                     S = diag(ncol(X)), factr = 1e5,
-                     maxit = 100, ...) {
+# Fit a variational Gaussian approximation to the multivariate
+# Poisson-normal model by maximizing the variational lower bound
+# ("ELBO"). Under this model, the count data Y[i,j] are Poisson with
+# log-rates A[i,j] + X[i,j]*b[j]. The unknown vector b is assigned a
+# multivariate normal prior with zero mean and covariance S0. The
+# intractable posterior for b is approximated by a multivariate normal
+# with mean mu and covariance S.
+#
+# Note that the limiting univariate case (b is a scalar) is also
+# handled.
+#
+# The optim L-BFGS-B solver is used to fit the mean and covariance of
+# the normal approximation. Note that the optimal solution should be
+# unique; see Arridge et al (2018) for details.
+#
+# This implementation is meant to be "instructive"---that is, I've
+# tried to make the code as simple as possible, with an emphasis on
+# clarity. Very little effort has been devoted to making the
+# implementation efficient, or the code concise.
+vgapois <- function (X, Y, A, S0, mu = rep(0,ncol(as.matrix(X))),
+                     S = diag(ncol(as.matrix(X))),
+                     factr = 1e5, maxit = 100, ...) {
   f <- function (par) {
     par <- optim2vgapois(par)
-    return(-compute_elbo_vgapois(X,Y,A,S0,par$mu,par$S))
+    return(-compute_elbo_vgapois(X,Y,A,S0,par$mu,crossprod(par$R)))
   }
-  # g <- function (par) {
+  # g = function (par) {
   #   par <- optim2vgapois(par)
   #   ans <- compute_elbo_grad_vgapois(X,Y,A,S0,par$mu,par$S)
   #   ans$S <- ans$S * (par$S + t(par$S))
   #   return(-vgapois2optim(ans$mu,ans$S))
   # }
-  out <- optim(vgapois2optim(mu,chol(S)),f)
-  return(c(out,optim2vgapois(out$par)))
+  out    <- optim(vgapois2optim(mu,chol(S)),f,
+                  control = list(factr = factr,maxit = maxit,...))
+  params <- optim2vgapois(out$par)
+  out$mu <- params$mu
+  out$S  <- drop(crossprod(params$R))
+  return(out)
 }
 
 # Given a mean (mu) and R = chol(S), where S is the covariance matrix,
 # return a parameter vector passed to optim. It is a vector containing
-# mu and the upper triangular portion of R = chol(S).
+# mu and the upper triangular portion of R = chol(S). Note that the
+# limiting case of one dimension is also handled.
 vgapois2optim <- function (mu, R)
   c(mu,R[upper.tri(R,diag = TRUE)])
 
-# Given an optim "par" vector, output the mean (mu) and covariance
-# matrix (S).
+# Given an optim "par" vector, output the mean (mu) and Cholesky
+# factor (R) of the covariance matrix, such that S = crossprod(R).
+# Note that the limiting case of one dimension (n = 1) is also
+# handled.
 optim2vgapois <- function (par) {
   n   <- (sqrt(1 + 8*length(par)) - 1)/2
   mu  <- par[1:n]
   par <- par[-(1:n)]
   R   <- matrix(0,n,n)
   R[upper.tri(R,diag = TRUE)] <- par
-  return(list(mu = mu,S = crossprod(R)))
+  return(list(mu = mu,R = drop(R)))
 }
 
 # Compute the log-likelihood of the counts, y, under the univariate
-# Poisson-normal model.  See function vgapois1 for details.
+# Poisson-normal model. See function vgapois1 for details.
 compute_loglik_pois1 <- function (x, y, a, b) {
   r <- a + x*b # Poisson log-rates
   return(sum(dpois(y,exp(r),log = TRUE)))
@@ -69,8 +94,8 @@ compute_loglik_pois1 <- function (x, y, a, b) {
 
 # Compute the log-likelihood of the counts, Y, under the multivariate
 # Poisson-normal model. See function vgapois for details. Note that
-# the special case of one dimension (i.e., the univariate model) is
-# also permitted, and should give the same result as compute_loglik_pois1.
+# the special case of one dimension is also handled, and should give
+# the same result as compute_loglik_pois1.
 compute_loglik_pois <- function (X, Y, A, b) {
   R <- A + scalecols(X,b) # Poisson log-rates
   return(sum(dpois(Y,exp(R),log = TRUE)))
@@ -92,10 +117,17 @@ compute_elbo_vgapois1 <- function (x, y, a, s0, mu, s) {
 
 # Compute the variational lower bound ("ELBO") for the variational
 # approximation to the multivariate Poisson-normal model. See function
-# vgapois for details on the input arguments.
+# vgapois for details on the input arguments. Note that the special
+# case of one dimension is also handled, and should give the same
+# result as compute_elbo_vgapois1.
 compute_elbo_vgapois <- function (X, Y, A, S0, mu, S) {
-  n <- nrow(X)
-  m <- ncol(X)
+  S  <- as.matrix(S)
+  S0 <- as.matrix(S0)
+  X  <- as.matrix(X)
+  Y  <- as.matrix(Y)
+  A  <- as.matrix(A)
+  n  <- nrow(X)
+  m  <- ncol(X)
   f <- (m - drop(t(mu) %*% solve(S0,mu))
         - sum(diag(solve(S0) %*% S))
         + determinant(S,logarithm = TRUE)$modulus
@@ -104,8 +136,9 @@ compute_elbo_vgapois <- function (X, Y, A, S0, mu, S) {
     x <- X[i,]
     y <- Y[i,]  
     a <- A[i,]
-    r <- a + x*mu  # mean log-rates
-    u <- r + diag(diag(x) %*% S %*% diag(x))/2 # "overdispersed" log-rates
+    D <- diag(x,m,m)
+    r <- a + x*mu                  # mean log-rates
+    u <- r + diag(D %*% S %*% D)/2 # "overdispersed" log-rates
     f <- f + sum(y*r) - sum(exp(u)) - sum(lfactorial(y))
   }
   return(f)
@@ -141,8 +174,8 @@ compute_elbo_grad_vgapois <- function (X, Y, A, S0, mu, S) {
 }
 
 # Return the Kullback-Leibler divergence KL(p1 || p2) between two
-# (univariate) normal distributions p1 and p2, where p1 is normal with
-# mean mu1 and variance s1, and p2 is normal with mean mu2 and
+# (univariate) normal distributions p1, and p2, where p1 is normal
+# with mean mu1 and variance s1, and p2 is normal with mean mu2 and
 # variance s2.
 kl_norm1 <- function (mu1, mu2, s1, s2)
   (log(s1/s2) + s2/s1 - 1  + (mu1 - mu2)^2/s1)/2
