@@ -125,9 +125,9 @@ compute_elbo_vgapois1 <- function (x, y, a, s0, mu, s) {
 compute_elbo_vgapois <- function (X, Y, A, S0, mu, R) {
   mu0 <- rep(0,length(mu))
   S   <- crossprod(R)
-  R   <- A + scalecols(X,mu)          # mean log-rates
-  U   <- R + scalecols(X^2,diag(S))/2 # "overdispersed" log-rates
-  return(sum(dpois(Y,exp(U),log = TRUE) - Y*(U - R)) - klnorm(mu0,S0,mu,S))
+  L   <- A + scalecols(X,mu)          # mean log-rates
+  U   <- L + scalecols(X^2,diag(S))/2 # "overdispersed" log-rates
+  return(sum(dpois(Y,exp(U),log = TRUE) - Y*(U - L)) - klnorm(mu0,S0,mu,S))
 }
 
 # Compute the gradient of the univariate Poisson-normal ELBO with
@@ -150,8 +150,9 @@ compute_elbo_grad_vgapois <- function (X, Y, A, S0, mu, R) {
   L   <- A + scalecols(X,mu) # mean log-rates
   U   <- L + scalecols(X^2,diag(crossprod(R)))/2 # "overdispersed" log-rates
   gmu <- colSums(X*(Y - exp(U))) - solve(S0,mu)
-  gR  <- solve(t(R)) - R %*% solve(S0) - R %*% diag(colSums(X^2*exp(U)))
-  return(list(mu = gmu,R = gR))
+  gR  <- solve(t(R)) - R %*% solve(S0) -
+           R %*% diag(as.matrix(colSums(X^2*exp(U))))
+  return(list(mu = gmu,R = drop(gR)))
 }
 
 # Return the Kullback-Leibler divergence KL(p2 || p1) between two
@@ -164,9 +165,12 @@ klnorm1 <- function (mu1, s1, mu2, s2)
 # Return the Kullback-Leibler divergence KL(p2 || p1) between two
 # multivariate normal distributions, p1 and p2, where p1 is
 # multivariate normal with mean mu1 and covariance S1, and p2 is
-# multivariate normal with mean mu2 and covariance S2.
+# multivariate normal with mean mu2 and covariance S2. Note that the
+# limiting case of one dimension is also handled, and should give the
+# same result as klnorm1.
 klnorm <- function (mu1, S1, mu2, S2)
-  drop((logdet(S1) - logdet(S2) + sum(diag(S2 %*% solve(S1)))
+  drop((logdet(S1) - logdet(S2)
+        + sum(diag(as.matrix(S2 %*% solve(S1))))
         + (mu1 - mu2) %*% solve(S1,mu1 - mu2) - length(mu1))/2)
 
 # Compute the logarithm of the matrix determinant.
