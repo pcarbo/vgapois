@@ -38,10 +38,10 @@ S   <- fit$S
 cat(fit$message,"\n")
 cat(sprintf("Monte Carlo estimate:    %0.12f\n",logZ))
 cat(sprintf("Variational lower bound: %0.12f\n",-fit$value))
-cat("Monte Carlo mean estimates:\n")
+cat("Monte Carlo estimates:\n")
 print(mu.mc)
 print(S.mc)
-cat("Variational covariance estimates:\n")
+cat("Variational estimates:\n")
 print(mu)
 print(S)
 

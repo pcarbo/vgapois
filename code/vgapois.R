@@ -113,7 +113,7 @@ compute_logp_pois1 <- function (x, y, a, b, s0)
 compute_elbo_vgapois1 <- function (x, y, a, s0, mu, s) {
   r <- a + x*mu    # mean log-rates
   u <- r + s*x^2/2 # "overdispersed" log-rates
-  return(sum(dpois(y,exp(u),log = TRUE) - y*s*x^2/2) - kl_norm1(0,mu,s0,s))
+  return(sum(dpois(y,exp(u),log = TRUE) - y*(u - r)) - kl_norm1(0,mu,s0,s))
 }
 
 # Compute the variational lower bound ("ELBO") for the variational
@@ -122,24 +122,10 @@ compute_elbo_vgapois1 <- function (x, y, a, s0, mu, s) {
 # case of one dimension is also handled, and should give the same
 # result as compute_elbo_vgapois1.
 compute_elbo_vgapois <- function (X, Y, A, S0, mu, S) {
-  S  <- as.matrix(S)
-  S0 <- as.matrix(S0)
-  X  <- as.matrix(X)
-  Y  <- as.matrix(Y)
-  A  <- as.matrix(A)
-  n  <- nrow(X)
-  m  <- ncol(X)
-  f  <- -kl_norm(rep(0,m),mu,S0,S)
-  for (i in 1:n) {
-    x <- X[i,]
-    y <- Y[i,]  
-    a <- A[i,]
-    D <- diag(x,m,m)
-    r <- a + x*mu                  # mean log-rates
-    u <- r + diag(D %*% S %*% D)/2 # "overdispersed" log-rates
-    f <- f + sum(y*r) - sum(exp(u)) - sum(lfactorial(y))
-  }
-  return(f)
+  R <- A + scalecols(X,mu)          # mean log-rates
+  U <- R + scalecols(X^2,diag(S))/2 # "overdispersed" log-rates
+  return(sum(dpois(Y,exp(U),log = TRUE) - Y*(U - R))
+         - kl_norm(rep(0,length(mu)),mu,S0,S))
 }
 
 # Compute the gradient of the univariate Poisson-normal ELBO with
@@ -189,7 +175,7 @@ kl_norm <- function (mu1, mu2, S1, S2)
 
 # Compute the logarithm of the matrix determinant.
 logdet <- function (x)
-  as.numeric(determinant(x,logarithm = TRUE)$modulus)
+  as.numeric(determinant(as.matrix(x),logarithm = TRUE)$modulus)
 
 # scalecols(A,b) scales each column A[,i] by b[i].
 scalecols <- function (A, b)
