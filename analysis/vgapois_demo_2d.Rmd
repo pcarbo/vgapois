@@ -1,10 +1,39 @@
-# Illustration of variational Gaussian approximation for Poisson-normal
-# model with two unknowns.
+---
+title: Illustration of variational Gaussian approximation for Poisson-normal model with two unknowns
+author: Peter Carbonetto
+output: workflowr::wflow_html
+---
+
+Here we demonstrate the variational Gaussian approximation for the
+multivariate Poisson-normal with two unknowns. Under the data model,
+the counts $y_{ij}$ are Poisson with log-rates $\eta_{ij}$, in which
+$\eta_i = a_{ij} + x_{ij} b_j$. The unknown $b$ is assigned a
+multivariate normal prior with zero mean and covariance $S_0$. Here we
+use variational methods to approximate the posterior of $b$ with a
+normal density $N(b; \mu, S)$. See the [Overleaf document][overleaf]
+for a more detailed description of the model and variational
+approximation.
+
+```{r knitr-opts, include=FALSE}
+knitr::opts_chunk$set(comment = "#",collapse = TRUE,results = "hold",
+                      fig.align = "center",dpi = 120)
+```
+
+Load the mvtnorm package, the functions implementing the variational
+inference algorithms, and set the seed.
+
+```{r setup}
 library(mvtnorm)
 source("../code/vgapois.R")
 set.seed(1)
+```
 
-# Simulate data.
+Simulate data
+-------------
+
+Simulate counts from the Poisson model.
+
+```{r sim-data}
 n <- 16
 b <- c(1.3,1.5)
 A <- matrix(rnorm(2*n,mean = -2),n,2)
@@ -12,8 +41,16 @@ X <- matrix(rnorm(2*n),n,2)
 Y <- matrix(0,n,2)
 R <- A + scalecols(X,b)
 Y <- matrix(rpois(2*n,exp(R)),n,2)
+```
 
-# Compute Monte Carlo estimate of marginal likelihood.
+Compute Monte Carlo estimate of marginal likelihood
+---------------------------------------------------
+
+Here we compute an importance sampling estimate of the marginal
+log-likelihood. We will compare this against the lower bound to the
+marginal likelihood obtained by the variational approximation.
+
+```{r importance-sampling-1}
 S0   <- rbind(c(2,1.9),
               c(1.9,2))
 ns   <- 1e5
@@ -23,25 +60,44 @@ for (i in 1:ns)
   logw[i] <- compute_loglik_pois(X,Y,A,B[i,])
 d    <- max(logw)
 logZ <- log(mean(exp(logw - d))) + d
+```
 
-# Compute importance sampling estimates of mean and covariance.
+Compute importance sampling estimates of the mean and variance.
+
+```{r importance-sampling-2}
 w     <- exp(logw - d)
 w     <- w/sum(w)
 mu.mc <- drop(w %*% B)
 S.mc  <- crossprod(sqrt(w)*B) - tcrossprod(mu.mc)
+```
 
-# Fit variational approximation.
+Fit variational approximation
+-----------------------------
+
+Fit the variational Gaussian approximation by optimizing the
+variational lower bound (the "ELBO").
+
+```{r fit-vgapois-1}
 fit <- vgapois(X,Y,A,S0)
 mu  <- fit$mu
 S   <- fit$S
-
 cat(fit$message,"\n")
 cat(sprintf("Monte Carlo estimate:    %0.12f\n",logZ))
 cat(sprintf("Variational lower bound: %0.12f\n",-fit$value))
+```
+
+Here we see that the ELBO slightly undershoots the marginal likelihood.
+
+Compare the importance sampling and variational estimates of the mean
+and covariance:
+
+```{r fit-vgapois-2}
 cat("Monte Carlo estimates:\n")
 print(mu.mc)
 print(S.mc)
 cat("Variational estimates:\n")
 print(mu)
 print(S)
+```
 
+[overleaf]: https://www.overleaf.com/read/fbwkmbcjzctc
