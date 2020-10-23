@@ -7,7 +7,7 @@ output: workflowr::wflow_html
 Here we demonstrate the variational Gaussian approximation for the
 Poisson-normal in the simplest case when there is one unknown. Under
 the data model, the counts $y_1, \ldots, y_n$ are Poisson with
-log-rates $\lambda_1, \ldots, \lambda_n$, in which $\lambda_i = a_i +
+log-rates $\eta_1, \ldots, \eta_n$, in which $\eta_i = a_i +
 x_i b$. The unknown $b$ is assigned a normal prior with zero mean and
 standard deviation $\sigma_0$. Here we use variational methods to
 approximate the posterior of $b$ with a normal density $N(b; \mu,
@@ -31,7 +31,7 @@ Simulate data
 -------------
 
 Simulate counts from the following Poisson model: $y_i \sim
-\mathrm{Poisson}(e^{\lambda_i})$, in which $\lambda_i = a_i + b x_i$.
+\mathrm{Poisson}(e^{\eta_i})$, in which $\eta_i = a_i + b x_i$.
 
 ```{r sim-data}
 n <- 10
@@ -46,7 +46,7 @@ Compute Monte Carlo estimate of marginal likelihood
 ---------------------------------------------------
 
 Here we compute an importance sampling estimate of the marginal
-log-likelihood We will compare this against the lower bound to the
+log-likelihood. We will compare this against the lower bound to the
 marginal likelihood obtained by the variational approximation.
 
 ```{r importance-sampling-1}
