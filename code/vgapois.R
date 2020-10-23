@@ -149,11 +149,13 @@ compute_elbo_grad_vgapois1 <- function (x, y, a, s0, mu, s) {
 # dimension is also handled (when mu and R are both scalars), and
 # should give the same result as compute_elbo_grad_vgapois1.
 compute_elbo_grad_vgapois <- function (X, Y, A, S0, mu, R) {
+  X   <- as.matrix(X)
+  m   <- ncol(X)
   L   <- A + scalecols(X,mu) # mean log-rates
   U   <- L + scalecols(X^2,diag(crossprod(R)))/2 # "overdispersed" log-rates
   gmu <- colSums(X*(Y - exp(U))) - solve(S0,mu)
   gR  <- solve(t(R)) - R %*% solve(S0) -
-           R %*% diag(as.matrix(colSums(X^2*exp(U))))
+           R %*% diag(colSums(X^2*exp(U)),m,m)
   return(list(mu = gmu,R = drop(gR)))
 }
 
