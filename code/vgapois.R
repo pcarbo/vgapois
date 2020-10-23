@@ -124,9 +124,9 @@ compute_elbo_vgapois1 <- function (x, y, a, s0, mu, s) {
 # same result as compute_elbo_vgapois1.
 compute_elbo_vgapois <- function (X, Y, A, S0, mu, R) {
   mu0 <- rep(0,length(mu))
-  S <- crossprod(R)
-  R <- A + scalecols(X,mu)          # mean log-rates
-  U <- R + scalecols(X^2,diag(S))/2 # "overdispersed" log-rates
+  S   <- crossprod(R)
+  R   <- A + scalecols(X,mu)          # mean log-rates
+  U   <- R + scalecols(X^2,diag(S))/2 # "overdispersed" log-rates
   return(sum(dpois(Y,exp(U),log = TRUE) - Y*(U - R)) - klnorm(mu0,S0,mu,S))
 }
 
@@ -147,21 +147,10 @@ compute_elbo_grad_vgapois1 <- function (x, y, a, s0, mu, s) {
 # matrix, R = chol(S). See function vgapois for additional details
 # about the input arguments.
 compute_elbo_grad_vgapois <- function (X, Y, A, S0, mu, R) {
-  n <- nrow(X)
-  m <- ncol(X)
-  S <- crossprod(R)
-  gmu <- -solve(S0,mu)
-  gR <- solve(t(R)) - R %*% solve(S0)
-  for (i in 1:n) {
-    x <- X[i,]
-    y <- Y[i,]  
-    a <- A[i,]
-    D <- diag(x)
-    r <- a + x*mu                  # mean log-rates
-    u <- r + diag(D %*% S %*% D)/2 # "overdispersed" log-rates
-    gmu <- gmu + x*(y - exp(u))
-    gR <- gR - R %*% diag(x^2*exp(u))
-  }
+  L   <- A + scalecols(X,mu) # mean log-rates
+  U   <- L + scalecols(X^2,diag(crossprod(R)))/2 # "overdispersed" log-rates
+  gmu <- colSums(X*(Y - exp(U))) - solve(S0,mu)
+  gR  <- solve(t(R)) - R %*% solve(S0) - R %*% diag(colSums(X^2*exp(U)))
   return(list(mu = gmu,R = gR))
 }
 
