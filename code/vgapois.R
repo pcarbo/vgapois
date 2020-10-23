@@ -68,7 +68,8 @@ vgapois <- function (X, Y, A, S0, mu = rep(0,ncol(as.matrix(X))),
 # Given a mean (mu) and R = chol(S), where S is the covariance matrix,
 # return a parameter vector passed to optim. It is a vector containing
 # mu and the upper triangular portion of R = chol(S). Note that the
-# limiting case of one dimension is also handled.
+# limiting case of one dimension is also handled, in which case the
+# return value is a 2-element vector.
 vgapois2optim <- function (mu, R)
   c(mu,R[upper.tri(R,diag = TRUE)])
 
@@ -128,10 +129,7 @@ compute_elbo_vgapois <- function (X, Y, A, S0, mu, S) {
   A  <- as.matrix(A)
   n  <- nrow(X)
   m  <- ncol(X)
-  f <- (m - drop(t(mu) %*% solve(S0,mu))
-        - sum(diag(solve(S0) %*% S))
-        + determinant(S,logarithm = TRUE)$modulus
-        - determinant(S0,logarithm = TRUE)$modulus)/2  
+  f  <- -kl_norm(rep(0,m),mu,S0,S)
   for (i in 1:n) {
     x <- X[i,]
     y <- Y[i,]  
@@ -174,16 +172,24 @@ compute_elbo_grad_vgapois <- function (X, Y, A, S0, mu, S) {
 }
 
 # Return the Kullback-Leibler divergence KL(p1 || p2) between two
-# (univariate) normal distributions p1, and p2, where p1 is normal
+# (univariate) normal distributions, p1 and p2, where p1 is normal
 # with mean mu1 and variance s1, and p2 is normal with mean mu2 and
 # variance s2.
 kl_norm1 <- function (mu1, mu2, s1, s2)
   (log(s1/s2) + s2/s1 - 1  + (mu1 - mu2)^2/s1)/2
 
-# TO DO: Explain here what this function does, and how to use it.
-kl_norm <- function (mu1, mu2, S1, S2) {
-  # TO DO.
-}
+# Return the Kullback-Leibler divergence KL(p1 || p2) between two
+# multivariate normal distributions, p1 and p2, where p1 is
+# multivariate normal with mean mu1 and covariance S1, and p2 is
+# multivariate normal with mean mu2 and covariance S2.
+kl_norm <- function (mu1, mu2, S1, S2)
+  drop((logdet(S1) - logdet(S2) - length(mu1)
+        + sum(diag(S2 %*% solve(S1)))
+        + (mu1 - mu2) %*% solve(S1,mu1 - mu2))/2)
+
+# Compute the logarithm of the matrix determinant.
+logdet <- function (x)
+  as.numeric(determinant(x,logarithm = TRUE)$modulus)
 
 # scalecols(A,b) scales each column A[,i] by b[i].
 scalecols <- function (A, b)

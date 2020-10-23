@@ -79,7 +79,7 @@ variational lower bound (the "ELBO").
 fit1 <- vgapois1(x,y,a,s0)
 mu   <- fit1$par["mu"]
 s    <- fit1$par["s"]
-cat(fit$message,"\n")
+cat(fit1$message,"\n")
 cat(sprintf("Monte Carlo estimate:    %0.12f\n",logZ))
 cat(sprintf("Variational lower bound: %0.12f\n",-fit1$value))
 ```
@@ -119,12 +119,15 @@ normal approximation is a good fit to the true posterior.
 Verify multivariate implementation
 ----------------------------------
 
-*Add text here.*
+The multivariate implementation of the variational Gaussiaan
+approximation for the Poisson-normal model also handles the limiting
+univariate case, and should return the same result as `vgapois1`.
 
 ```{r vgapois-multivariate}
 fit <- vgapois(x,y,a,s0)
 print(mu - fit$mu)
 print(s - fit$S)
+print(fit1$value - fit$value)
 ```
 
 [overleaf]: https://www.overleaf.com/read/fbwkmbcjzctc
