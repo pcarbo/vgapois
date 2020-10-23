@@ -7,19 +7,19 @@ output: workflowr::wflow_html
 Here we demonstrate the variational Gaussian approximation for the
 multivariate Poisson-normal with two unknowns. Under the data model,
 the counts $y_{ij}$ are Poisson with log-rates $\eta_{ij}$, in which
-$\eta_i = a_{ij} + x_{ij} b_j$. The unknown $b$ is assigned a
+$\eta_i = a_{ij} + x_{ij} b_j$. The unknown vector $b$ is assigned a
 multivariate normal prior with zero mean and covariance $S_0$. Here we
 use variational methods to approximate the posterior of $b$ with a
-normal density $N(b; \mu, S)$. See the [Overleaf document][overleaf]
-for a more detailed description of the model and variational
-approximation.
+multivariate normal density $N(b; \mu, S)$. See the
+[Overleaf document][overleaf] for a more detailed description of the
+model and variational approximation.
 
 ```{r knitr-opts, include=FALSE}
 knitr::opts_chunk$set(comment = "#",collapse = TRUE,results = "hold",
                       fig.align = "center",dpi = 120)
 ```
 
-Load the mvtnorm package, the functions implementing the variational
+Load the `mvtnorm` package, the functions implementing the variational
 inference algorithms, and set the seed.
 
 ```{r setup}
@@ -88,8 +88,9 @@ cat(sprintf("Variational lower bound: %0.12f\n",-fit$value))
 
 Here we see that the ELBO slightly undershoots the marginal likelihood.
 
-Compare the importance sampling and variational estimates of the mean
-and covariance:
+Compare the importance sampling and variational estimates of the
+posterior mean and covariance. The covariances are very similar, and
+the means are almost identical.
 
 ```{r fit-vgapois-2}
 cat("Monte Carlo estimates:\n")
