@@ -48,18 +48,17 @@ vgapois <- function (X, Y, A, S0, mu = rep(0,ncol(as.matrix(X))),
                      S = diag(ncol(as.matrix(X))),
                      factr = 1e5, maxit = 100, ...) {
   f <- function (par) {
-    par <- optim2vgapois(par)
-    return(-compute_elbo_vgapois(X,Y,A,S0,par$mu,crossprod(par$R)))
+    params <- par2vgapois(par)
+    return(-compute_elbo_vgapois(X,Y,A,S0,params$mu,params$R))
   }
-  # g = function (par) {
-  #   par <- optim2vgapois(par)
-  #   ans <- compute_elbo_grad_vgapois(X,Y,A,S0,par$mu,par$S)
-  #   ans$S <- ans$S * (par$S + t(par$S))
-  #   return(-vgapois2optim(ans$mu,ans$S))
-  # }
-  out <- optim(vgapois2optim(mu,chol(S)),f,
+  g <- function (par) {
+    params <- par2vgapois(par)
+    ans <- compute_elbo_grad_vgapois(X,Y,A,S0,params$mu,params$R)
+    return(-vgapois2par(ans$mu,ans$R))
+  }
+  out <- optim(vgapois2par(mu,chol(S)),f,g,method = "L-BFGS-B",
                control = list(factr = factr,maxit = maxit,...))
-  params <- optim2vgapois(out$par)
+  params <- par2vgapois(out$par)
   out$mu <- params$mu
   out$S  <- drop(crossprod(params$R))
   return(out)
@@ -70,14 +69,14 @@ vgapois <- function (X, Y, A, S0, mu = rep(0,ncol(as.matrix(X))),
 # mu and the upper triangular portion of R = chol(S). Note that the
 # limiting case of one dimension is also handled, in which case the
 # return value is a 2-element vector.
-vgapois2optim <- function (mu, R)
+vgapois2par <- function (mu, R)
   c(mu,R[upper.tri(R,diag = TRUE)])
 
 # Given an optim "par" vector, output the mean (mu) and Cholesky
 # factor (R) of the covariance matrix, such that S = crossprod(R).
 # Note that the limiting case of one dimension (n = 1) is also
 # handled.
-optim2vgapois <- function (par) {
+par2vgapois <- function (par) {
   n   <- (sqrt(1 + 8*length(par)) - 1)/2
   mu  <- par[1:n]
   par <- par[-(1:n)]
@@ -117,12 +116,15 @@ compute_elbo_vgapois1 <- function (x, y, a, s0, mu, s) {
 }
 
 # Compute the variational lower bound ("ELBO") for the variational
-# approximation to the multivariate Poisson-normal model. See function
-# vgapois for details on the input arguments. Note that the special
-# case of one dimension is also handled, and should give the same
-# result as compute_elbo_vgapois1.
-compute_elbo_vgapois <- function (X, Y, A, S0, mu, S) {
+# approximation to the multivariate Poisson-normal model, in which the
+# approximating distribution is parameterized by its mean mu and the
+# Cholesky factor of the covariance matrix, R = chol(S). See function
+# vgapois for additional details on the input arguments. Note that the
+# special case of one dimension is also handled, and should give the
+# same result as compute_elbo_vgapois1.
+compute_elbo_vgapois <- function (X, Y, A, S0, mu, R) {
   mu0 <- rep(0,length(mu))
+  S <- crossprod(R)
   R <- A + scalecols(X,mu)          # mean log-rates
   U <- R + scalecols(X^2,diag(S))/2 # "overdispersed" log-rates
   return(sum(dpois(Y,exp(U),log = TRUE) - Y*(U - R)) - klnorm(mu0,S0,mu,S))
@@ -133,28 +135,34 @@ compute_elbo_vgapois <- function (X, Y, A, S0, mu, S) {
 # approximation. See function vgapois1 for details about the input
 # arguments.
 compute_elbo_grad_vgapois1 <- function (x, y, a, s0, mu, s) {
-  r <- a + x*mu    # mean log-rates
-  u <- r + s*x^2/2 # "overdispersed" log-rates
-  return(c(sum(x*(y - exp(u))) - mu/s0,
-           (1/s - 1/s0 - sum(x^2*exp(u)))/2))
+  r   <- a + x*mu    # mean log-rates
+  u   <- r + s*x^2/2 # "overdispersed" log-rates
+  gmu <- sum(x*(y - exp(u))) - mu/s0
+  gs  <- (1/s - 1/s0 - sum(x^2*exp(u)))/2
+  return(c(gmu,gs))
 }
 
-# TO DO: Explain here what this function does, and how to use it.
-compute_elbo_grad_vgapois <- function (X, Y, A, S0, mu, S) {
-  n   <- nrow(X)
-  m   <- ncol(X)
+# Compute the gradient of the multivariate Poisson-normal ELBO with
+# respect to the mean (mu) and Cholesky factor of the covariance
+# matrix, R = chol(S). See function vgapois for additional details
+# about the input arguments.
+compute_elbo_grad_vgapois <- function (X, Y, A, S0, mu, R) {
+  n <- nrow(X)
+  m <- ncol(X)
+  S <- crossprod(R)
   gmu <- -solve(S0,mu)
-  gS  <- (solve(S) - solve(S0))/2
+  gR <- solve(t(R)) - R %*% solve(S0)
   for (i in 1:n) {
     x <- X[i,]
     y <- Y[i,]  
     a <- A[i,]
-    r <- a + x*mu  # mean log-rates
-    u <- r + diag(diag(x) %*% S %*% diag(x))/2 # "overdispersed" log-rates
+    D <- diag(x)
+    r <- a + x*mu                  # mean log-rates
+    u <- r + diag(D %*% S %*% D)/2 # "overdispersed" log-rates
     gmu <- gmu + x*(y - exp(u))
-    gS  <- gS - diag(x^2*exp(u))/2
+    gR <- gR - R %*% diag(x^2*exp(u))
   }
-  return(list(mu = gmu,S = gS))
+  return(list(mu = gmu,R = gR))
 }
 
 # Return the Kullback-Leibler divergence KL(p2 || p1) between two
