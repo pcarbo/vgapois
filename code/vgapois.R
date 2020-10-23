@@ -33,7 +33,7 @@ vgapois1 <- function (x, y, a, s0, mu = 0, s = 1, factr = 1e5,
 # intractable posterior for b is approximated by a multivariate normal
 # with mean mu and covariance S.
 #
-# Note that the limiting univariate case (b is a scalar) is also
+# Note that the limiting univariate case (when b is a scalar) is also
 # handled.
 #
 # The optim L-BFGS-B solver is used to fit the mean and covariance of
@@ -145,7 +145,9 @@ compute_elbo_grad_vgapois1 <- function (x, y, a, s0, mu, s) {
 # Compute the gradient of the multivariate Poisson-normal ELBO with
 # respect to the mean (mu) and Cholesky factor of the covariance
 # matrix, R = chol(S). See function vgapois for additional details
-# about the input arguments.
+# about the input arguments. Note that the limiting case of one
+# dimension is also handled (when mu and R are both scalars), and
+# should give the same result as compute_elbo_grad_vgapois1.
 compute_elbo_grad_vgapois <- function (X, Y, A, S0, mu, R) {
   L   <- A + scalecols(X,mu) # mean log-rates
   U   <- L + scalecols(X^2,diag(crossprod(R)))/2 # "overdispersed" log-rates
