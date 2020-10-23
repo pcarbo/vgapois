@@ -30,23 +30,6 @@ w     <- w/sum(w)
 mu.mc <- drop(w %*% B)
 S.mc  <- crossprod(sqrt(w)*B) - tcrossprod(mu.mc)
 
-# TESTING
-# -------
-source("../code/vgapois.R")
-f <- function (par) {
-  params <- par2vgapois(par)
-  return(-compute_elbo_vgapois(X,Y,A,S0,params$mu,params$R))
-}
-g <- function (par) {
-  params <- par2vgapois(par)
-  ans <- compute_elbo_grad_vgapois(X,Y,A,S0,params$mu,params$R)
-  return(-vgapois2par(ans$mu,ans$R))
-}
-mu <- c(1,1.2)
-S  <- rbind(c(0.2,0.05),
-            c(0.05,0.1))
-print(g(vgapois2par(mu,chol(S))) - grad(f,vgapois2par(mu,chol(S))))
-
 # Fit variational approximation.
 fit <- vgapois(X,Y,A,S0)
 mu  <- fit$mu
