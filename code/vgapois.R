@@ -57,8 +57,8 @@ vgapois <- function (X, Y, A, S0, mu = rep(0,ncol(as.matrix(X))),
   #   ans$S <- ans$S * (par$S + t(par$S))
   #   return(-vgapois2optim(ans$mu,ans$S))
   # }
-  out    <- optim(vgapois2optim(mu,chol(S)),f,
-                  control = list(factr = factr,maxit = maxit,...))
+  out <- optim(vgapois2optim(mu,chol(S)),f,
+               control = list(factr = factr,maxit = maxit,...))
   params <- optim2vgapois(out$par)
   out$mu <- params$mu
   out$S  <- drop(crossprod(params$R))
@@ -113,7 +113,7 @@ compute_logp_pois1 <- function (x, y, a, b, s0)
 compute_elbo_vgapois1 <- function (x, y, a, s0, mu, s) {
   r <- a + x*mu    # mean log-rates
   u <- r + s*x^2/2 # "overdispersed" log-rates
-  return(sum(dpois(y,exp(u),log = TRUE) - y*(u - r)) - kl_norm1(0,mu,s0,s))
+  return(sum(dpois(y,exp(u),log = TRUE) - y*(u - r)) - klnorm1(0,s0,mu,s))
 }
 
 # Compute the variational lower bound ("ELBO") for the variational
@@ -122,10 +122,10 @@ compute_elbo_vgapois1 <- function (x, y, a, s0, mu, s) {
 # case of one dimension is also handled, and should give the same
 # result as compute_elbo_vgapois1.
 compute_elbo_vgapois <- function (X, Y, A, S0, mu, S) {
+  mu0 <- rep(0,length(mu))
   R <- A + scalecols(X,mu)          # mean log-rates
   U <- R + scalecols(X^2,diag(S))/2 # "overdispersed" log-rates
-  return(sum(dpois(Y,exp(U),log = TRUE) - Y*(U - R))
-         - kl_norm(rep(0,length(mu)),mu,S0,S))
+  return(sum(dpois(Y,exp(U),log = TRUE) - Y*(U - R)) - klnorm(mu0,S0,mu,S))
 }
 
 # Compute the gradient of the univariate Poisson-normal ELBO with
@@ -157,21 +157,20 @@ compute_elbo_grad_vgapois <- function (X, Y, A, S0, mu, S) {
   return(list(mu = gmu,S = gS))
 }
 
-# Return the Kullback-Leibler divergence KL(p1 || p2) between two
+# Return the Kullback-Leibler divergence KL(p2 || p1) between two
 # (univariate) normal distributions, p1 and p2, where p1 is normal
 # with mean mu1 and variance s1, and p2 is normal with mean mu2 and
 # variance s2.
-kl_norm1 <- function (mu1, mu2, s1, s2)
-  (log(s1/s2) + s2/s1 - 1  + (mu1 - mu2)^2/s1)/2
+klnorm1 <- function (mu1, s1, mu2, s2)
+  (log(s1/s2) + s2/s1 + (mu1 - mu2)^2/s1 - 1)/2
 
-# Return the Kullback-Leibler divergence KL(p1 || p2) between two
+# Return the Kullback-Leibler divergence KL(p2 || p1) between two
 # multivariate normal distributions, p1 and p2, where p1 is
 # multivariate normal with mean mu1 and covariance S1, and p2 is
 # multivariate normal with mean mu2 and covariance S2.
-kl_norm <- function (mu1, mu2, S1, S2)
-  drop((logdet(S1) - logdet(S2) - length(mu1)
-        + sum(diag(S2 %*% solve(S1)))
-        + (mu1 - mu2) %*% solve(S1,mu1 - mu2))/2)
+klnorm <- function (mu1, S1, mu2, S2)
+  drop((logdet(S1) - logdet(S2) + sum(diag(S2 %*% solve(S1)))
+        + (mu1 - mu2) %*% solve(S1,mu1 - mu2) - length(mu1))/2)
 
 # Compute the logarithm of the matrix determinant.
 logdet <- function (x)
